@@ -1,0 +1,11 @@
+3,T,T,T,T,T,T,T,T,T,2
+T,T,T,T,T,T,T,T,T,T,G
+T,G,3,G,T,T,T,G,3,G,T
+T,G,G,G,T,T,T,G,G,G,T
+T,T,T,T,4,T,4,T,T,T,T
+T,T,T,G,G,G,G,G,T,T,T
+T,T,T,T,4,T,4,T,T,T,T
+T,T,T,G,T,T,T,G,T,T,T
+T,G,3,G,T,T,T,T,3,G,T
+T,T,G,G,T,T,T,G,G,G,T
+3,T,T,T,T,T,T,T,T,T,2
