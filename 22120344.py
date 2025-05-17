@@ -263,71 +263,16 @@ def backtracking(grid, output_file):
     execution_time = end_time - start_time
     return result, execution_time
 
-def create_test_cases():
-    """Create 3 sample test cases."""
-    os.makedirs('testcases', exist_ok=True)
-    
-    test1 = [
-        ['2', '_', '_', '1', '_'],
-        ['_', '5', '4', '2', '_'],
-        ['3', '_', '_', '2', '1'],
-        ['3', '_', '6', '_', '1'],
-        ['2', '_', '_', '2', '1']
-    ]
-    write_output(test1, 'testcases/input_1.txt')
-    
-    test2 = [
-        ['3', '_', '_', '_', '_', '_', '_', '_', '_', '_', '2'],
-        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-        ['_', '_', '3', '_', '_', '_', '_', '_', '3', '_', '_'],
-        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-        ['_', '_', '_', '_', '4', '_', '4', '_', '_', '_', '_'],
-        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-        ['_', '_', '_', '_', '4', '_', '4', '_', '_', '_', '_'],
-        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-        ['_', '_', '3', '_', '_', '_', '_', '_', '3', '_', '_'],
-        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-        ['3', '_', '_', '_', '_', '_', '_', '_', '_', '_', '2']
-    ]
-    write_output(test2, 'testcases/input_2.txt')
-    
-    test3 = []
-    test3.append(['3'] + ['_']*18 + ['2'])
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_', '_', '3'] + ['_']*14 + ['3', '_', '_'])
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*4 + ['4'] + ['_']*10 + ['4'] + ['_']*4)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*6 + ['4'] + ['_']*6 + ['4'] + ['_']*6)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*8 + ['5'] + ['_']*2 + ['5'] + ['_']*8)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*8 + ['5'] + ['_']*2 + ['5'] + ['_']*8)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*6 + ['4'] + ['_']*6 + ['4'] + ['_']*6)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_']*4 + ['4'] + ['_']*10 + ['4'] + ['_']*4)
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['_', '_', '3'] + ['_']*14 + ['3', '_', '_'])
-    for _ in range(2):
-        test3.append(['_']*20)
-    test3.append(['3'] + ['_']*18 + ['2'])
-    write_output(test3, 'testcases/input_3.txt')
-
 def main():
-    create_test_cases()
+    # Process the provided input files
     for i in range(1, 4):
         input_file = f'testcases/input_{i}.txt'
         output_file = f'testcases/output_{i}.txt'
         print(f"\nProcessing {input_file}")
+        
+        if not os.path.exists(input_file):
+            print(f"Error: Input file {input_file} does not exist.")
+            continue
         
         grid = read_input(input_file)
         
