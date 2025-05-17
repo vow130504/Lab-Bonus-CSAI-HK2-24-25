@@ -14,14 +14,13 @@ def read_input(file_path):
             grid.append(row)
     return grid
 
-def write_output(grid, file_path, message=None):
-    """Ghi kết quả vào file output."""
+def write_output(grid, file_path, method=None):
+    """Ghi kết quả vào file output với tên file riêng cho mỗi phương pháp."""
+    if method:
+        file_path = file_path.replace('.txt', f'_{method}.txt')
     with open(file_path, 'w') as f:
-        if message:
-            f.write(message + '\n')
-        else:
-            for row in grid:
-                f.write(','.join(row) + '\n')
+        for row in grid:
+            f.write(','.join(row) + '\n')
 
 def get_neighbors(i, j, rows, cols):
     """Lấy các ô lân cận (8 ô xung quanh)."""
@@ -50,13 +49,13 @@ def check_grid_validity(grid):
     return True
 
 def generate_cnf(grid):
-    """Tạo các ràng buộc CNF và loại bỏ trùng lặp."""
+    """Tạo các ràng buộc CNF đúng cho bài toán."""
     rows, cols = len(grid), len(grid[0])
     cnf = CNF()
     var_map = {}
     var_count = 0
 
-    # Gán biến logic cho các ô
+    # Gán biến logic cho các ô trống
     for i in range(rows):
         for j in range(cols):
             if grid[i][j] == '_':
@@ -88,12 +87,12 @@ def generate_cnf(grid):
                         for var_id in neighbor_vars:
                             clauses_set.add((-var_id,))  # Tất cả phải là G
                     else:
-                        # Ít nhất adjusted_k bẫy: Không được có (len(neighbor_vars) - adjusted_k + 1) ô đều là G
+                        # Ít nhất adjusted_k bẫy
                         if adjusted_k > 0:
                             for comb in itertools.combinations(neighbor_vars, len(neighbor_vars) - adjusted_k + 1):
-                                clause = tuple(var_id for var_id in comb)  # Ít nhất một ô trong tổ hợp phải là T
+                                clause = tuple(var_id for var_id in comb)
                                 clauses_set.add(clause)
-                        # Không quá adjusted_k bẫy: Không được có (adjusted_k + 1) ô đều là T
+                        # Không quá adjusted_k bẫy
                         if adjusted_k < len(neighbor_vars):
                             for comb in itertools.combinations(neighbor_vars, adjusted_k + 1):
                                 clause = tuple(-var_id for var_id in comb)
@@ -105,16 +104,16 @@ def generate_cnf(grid):
     return cnf, var_map, var_count
 
 def solve_with_pysat(grid, output_file):
-    """Giải bài toán bằng PySAT."""
-    start_time = time.perf_counter()  # Sử dụng time.perf_counter() thay vì time.time()
+    """Giải bài toán bằng PySAT (CNF đúng)."""
+    start_time = time.perf_counter()
     if not check_grid_validity(grid):
         print("Grid is invalid.")
-        write_output(grid, output_file, "No solution due to invalid grid")
+        write_output(grid, output_file, "pysat")
         return None, None
 
     cnf, var_map, _ = generate_cnf(grid)
     if cnf is None:
-        write_output(grid, output_file, "No solution due to invalid constraints")
+        write_output(grid, output_file, "pysat")
         return None, None
 
     solver = Glucose3()
@@ -127,11 +126,10 @@ def solve_with_pysat(grid, output_file):
         for (i, j), var_id in var_map.items():
             if var_id is not None:
                 result_grid[i][j] = 'T' if model[var_id - 1] > 0 else 'G'
-        write_output(result_grid, output_file)
+        write_output(result_grid, output_file, "pysat")
     else:
         print("No solution found with PySAT.")
-        write_output(grid, output_file, "No solution found with PySAT")
-        return None, None
+        write_output(grid, output_file, "pysat")
 
     end_time = time.perf_counter()
     execution_time = end_time - start_time
@@ -146,73 +144,152 @@ def is_valid_grid(grid, partial=False):
                 k = int(grid[i][j])
                 neighbors = get_neighbors(i, j, rows, cols)
                 trap_count = sum(1 for ni, nj in neighbors if grid[ni][nj] == 'T')
+                ground_count = sum(1 for ni, nj in neighbors if grid[ni][nj] == 'G')
                 unknown_count = sum(1 for ni, nj in neighbors if grid[ni][nj] == '_')
                 
                 if not partial:
+                    # Nếu kiểm tra giải pháp cuối cùng, số bẫy phải chính xác là k
                     if trap_count != k:
                         return False
                 else:
-                    if trap_count > k or trap_count + unknown_count < k:
+                    # Kiểm tra giải pháp một phần
+                    # Nếu số bẫy đã vượt quá k, không hợp lệ
+                    if trap_count > k:
+                        return False
+                    # Nếu số bẫy hiện tại + số ô chưa biết < k, không thể đạt được k bẫy
+                    if trap_count + unknown_count < k:
                         return False
     return True
 
 def brute_force(grid, output_file):
     """Giải bài toán bằng Brute-force."""
-    start_time = time.perf_counter()  # Sử dụng time.perf_counter()
+    start_time = time.perf_counter()
     if not check_grid_validity(grid):
         print("Grid is invalid.")
-        write_output(grid, output_file, "No solution due to invalid grid")
+        write_output(grid, output_file, "bruteforce")
         return None, None
 
     rows, cols = len(grid), len(grid[0])
     empty_cells = [(i, j) for i in range(rows) for j in range(cols) if grid[i][j] == '_']
+    print(f"Number of empty cells: {len(empty_cells)}")
     
     def try_combinations(index, temp_grid):
         if index == len(empty_cells):
             if is_valid_grid(temp_grid):
                 return temp_grid
             return None
+        
         i, j = empty_cells[index]
-        temp_grid[i][j] = 'T'
-        if is_valid_grid(temp_grid, partial=True):
-            result = try_combinations(index + 1, temp_grid)
-            if result:
-                return result
+        
+        # Thử gán 'G' trước
         temp_grid[i][j] = 'G'
         if is_valid_grid(temp_grid, partial=True):
             result = try_combinations(index + 1, temp_grid)
             if result:
                 return result
+        
+        # Thử gán 'T' 
+        temp_grid[i][j] = 'T'
+        if is_valid_grid(temp_grid, partial=True):
+            result = try_combinations(index + 1, temp_grid)
+            if result:
+                return result
+        
+        # Quay lui
         temp_grid[i][j] = '_'
         return None
 
     result_grid = [row[:] for row in grid]
     result = try_combinations(0, result_grid)
+    
     if result:
-        write_output(result, output_file)
+        write_output(result, output_file, "bruteforce")
     else:
         print("No solution found with Brute-force.")
-        write_output(grid, output_file, "No solution found with Brute-force")
+        write_output(grid, output_file, "bruteforce")
 
     end_time = time.perf_counter()
     execution_time = end_time - start_time
     return result, execution_time
 
 def backtracking(grid, output_file):
-    """Giải bài toán bằng Backtracking (giống Brute-force trong trường hợp này)."""
-    return brute_force(grid, output_file)
+    """Giải bài toán bằng Backtracking với pruning."""
+    start_time = time.perf_counter()
+    if not check_grid_validity(grid):
+        print("Grid is invalid.")
+        write_output(grid, output_file, "backtracking")
+        return None, None
+
+    rows, cols = len(grid), len(grid[0])
+    
+    # Chọn ô để thử: ưu tiên các ô gần với ô số
+    def get_priority_cells(grid):
+        cells = []
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '_':
+                    priority = 0
+                    neighbors = get_neighbors(i, j, rows, cols)
+                    for ni, nj in neighbors:
+                        if grid[ni][nj].isdigit():
+                            priority += 1
+                    cells.append((priority, i, j))
+        # Sắp xếp theo mức độ ưu tiên giảm dần
+        return [(i, j) for _, i, j in sorted(cells, reverse=True)]
+    
+    empty_cells = get_priority_cells(grid)
+    print(f"Number of empty cells: {len(empty_cells)}")
+    
+    def try_backtrack(index, temp_grid):
+        if index == len(empty_cells):
+            if is_valid_grid(temp_grid):
+                return temp_grid
+            return None
+        
+        i, j = empty_cells[index]
+        
+        # Thử gán 'G' trước
+        temp_grid[i][j] = 'G'
+        if is_valid_grid(temp_grid, partial=True):
+            result = try_backtrack(index + 1, temp_grid)
+            if result:
+                return result
+        
+        # Thử gán 'T'
+        temp_grid[i][j] = 'T'
+        if is_valid_grid(temp_grid, partial=True):
+            result = try_backtrack(index + 1, temp_grid)
+            if result:
+                return result
+        
+        # Quay lui
+        temp_grid[i][j] = '_'
+        return None
+
+    result_grid = [row[:] for row in grid]
+    result = try_backtrack(0, result_grid)
+    
+    if result:
+        write_output(result, output_file, "backtracking")
+    else:
+        print("No solution found with Backtracking.")
+        write_output(grid, output_file, "backtracking")
+
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    return result, execution_time
 
 def create_test_cases():
     """Tạo 3 test case mẫu."""
     os.makedirs('testcases', exist_ok=True)
     
-    # Test case 1: 5x5 (đã sửa để hợp lệ và có nghiệm)
+    # Test case 1: 5x5
     test1 = [
-        ['1', 'T', '_', '1', '_'],
-        ['_', '1', '_', '1', '_'],
-        ['1', '_', '_', '1', '_'],
-        ['1', 'T', '_', 'T', '1'],
-        ['1', '_', '_', '1', '_']
+        ['2', 'T', 'T', '1', '_'],
+        ['_', '5', '4', '2', '_'],
+        ['3', '_', '_', '2', '1'],
+        ['3', 'T', '6', '_', '1'],
+        ['2', '_', '_', '2', '1']
     ]
     write_output(test1, 'testcases/input_1.txt')
     
@@ -280,7 +357,7 @@ def main():
         else:
             print("No solution found with PySAT")
         
-        if i < 3:
+        if i < 4:  # Chỉ chạy brute-force và backtracking cho các test case nhỏ hơn
             print("Solving with Brute-force...")
             result_bf, time_bf = brute_force(grid, output_file)
             if result_bf:
