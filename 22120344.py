@@ -106,7 +106,7 @@ def generate_cnf(grid):
 
 def solve_with_pysat(grid, output_file):
     """Giải bài toán bằng PySAT."""
-    start_time = time.time()
+    start_time = time.perf_counter()  # Sử dụng time.perf_counter() thay vì time.time()
     if not check_grid_validity(grid):
         print("Grid is invalid.")
         write_output(grid, output_file, "No solution due to invalid grid")
@@ -133,8 +133,9 @@ def solve_with_pysat(grid, output_file):
         write_output(grid, output_file, "No solution found with PySAT")
         return None, None
 
-    end_time = time.time()
-    return result_grid, end_time - start_time
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    return result_grid, execution_time
 
 def is_valid_grid(grid, partial=False):
     """Kiểm tra lưới có hợp lệ không trong quá trình giải."""
@@ -157,7 +158,7 @@ def is_valid_grid(grid, partial=False):
 
 def brute_force(grid, output_file):
     """Giải bài toán bằng Brute-force."""
-    start_time = time.time()
+    start_time = time.perf_counter()  # Sử dụng time.perf_counter()
     if not check_grid_validity(grid):
         print("Grid is invalid.")
         write_output(grid, output_file, "No solution due to invalid grid")
@@ -193,8 +194,9 @@ def brute_force(grid, output_file):
         print("No solution found with Brute-force.")
         write_output(grid, output_file, "No solution found with Brute-force")
 
-    end_time = time.time()
-    return result, end_time - start_time
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    return result, execution_time
 
 def backtracking(grid, output_file):
     """Giải bài toán bằng Backtracking (giống Brute-force trong trường hợp này)."""
