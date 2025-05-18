@@ -1,0 +1,6 @@
+2,T,G,1,T,2
+G,T,G,G,G,T
+G,G,3,T,G,G
+1,G,T,2,G,1
+T,G,G,G,G,T
+2,T,G,1,T,2

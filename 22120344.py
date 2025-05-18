@@ -167,7 +167,7 @@ def optimized_brute_force(grid):
     var_positions = {v: k for k, v in var_map.items() if v is not None}
     
     # Giới hạn kích thước để đảm bảo hiệu suất
-    if len(variables) > 20:
+    if len(variables) > 40:
         print("Brute-force không khả thi với số lượng biến lớn.")
         return None, None
     
@@ -321,7 +321,7 @@ def main():
     if not os.path.exists('testcases'):
         os.makedirs('testcases')
     
-    for i in range(1, 4):
+    for i in range(1, 5):
         input_file = f'testcases/input_{i}.txt'
         output_file = f'testcases/output_{i}.txt'
         
@@ -340,7 +340,7 @@ def main():
         result_pysat, time_pysat = solve_with_pysat(grid, output_file)
         print(f"Thời gian: {time_pysat:.6f}s")
         
-        if len(grid) <= 5:
+        if len(grid) <= 6:
             print("Giải bằng Brute-force...")
             result_bf, time_bf = optimized_brute_force(grid)
             print(f"Thời gian: {time_bf:.6f}s")
